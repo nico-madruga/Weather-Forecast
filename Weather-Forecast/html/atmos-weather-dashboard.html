@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101827" />
+  <title>Atmos — Weather Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: rgba(21, 33, 52, .82);
+      --panel-soft: rgba(28, 43, 65, .72);
+      --border: rgba(169, 193, 224, .12);
+      --text: #f2f6fc;
+      --muted: #91a2b9;
+      --accent: #78b7ff;
+      --accent-2: #8be0d0;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(50, 116, 180, .22), transparent 38%),
+        radial-gradient(ellipse at 90% 18%, rgba(53, 160, 164, .12), transparent 34%),
+        var(--bg);
+    }
+
+    .app { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 48px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 34px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 42px; height: 42px; display: grid; place-items: center;
+      border-radius: 14px; color: #071421; font-size: 22px;
+      background: linear-gradient(135deg, #9bd8ff, #83e2cf);
+      box-shadow: 0 8px 28px rgba(89, 183, 207, .22);
+    }
+    .brand-name { font: 700 20px 'Space Grotesk', sans-serif; letter-spacing: -.6px; }
+    .brand-sub { color: var(--muted); font-size: 11px; letter-spacing: 1.7px; text-transform: uppercase; margin-top: 2px; }
+    .header-note { color: var(--muted); font-size: 13px; }
+
+    .topline { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+    .eyebrow { color: var(--accent-2); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    h1 { font: 600 clamp(26px, 4vw, 38px) 'Space Grotesk', sans-serif; letter-spacing: -1.3px; margin: 7px 0 0; }
+    .search {
+      display: flex; align-items: center; gap: 10px; width: min(330px, 100%);
+      padding: 7px 8px 7px 15px; border: 1px solid var(--border); border-radius: 14px;
+      background: rgba(20, 33, 51, .78);
+    }
+    .search span { color: var(--muted); font-size: 16px; }
+    .search input { min-width: 0; flex: 1; color: var(--text); border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; }
+    .search input::placeholder { color: #71839b; }
+    .search button {
+      border: 0; border-radius: 10px; padding: 9px 13px; color: #081624;
+      background: var(--accent); font: 700 12px 'DM Sans', sans-serif; cursor: pointer;
+      transition: transform .2s, filter .2s;
+    }
+    .search button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+    .dashboard { display: grid; grid-template-columns: 1.45fr 1fr; gap: 16px; }
+    .panel {
+      border: 1px solid var(--border); border-radius: 22px;
+      background: linear-gradient(145deg, rgba(25, 41, 62, .92), rgba(15, 27, 44, .88));
+      box-shadow: 0 18px 55px rgba(0, 0, 0, .16);
+    }
+    .current { position: relative; overflow: hidden; min-height: 315px; padding: 28px 30px; }
+    .current::after {
+      content: ''; position: absolute; width: 290px; height: 290px; right: 4%; top: 0;
+      border-radius: 50%; background: rgba(102, 176, 231, .07); filter: blur(2px);
+      pointer-events: none;
+    }
+    .location { color: var(--muted); font-size: 14px; }
+    .location strong { color: var(--text); font-weight: 600; }
+    .current-main { display: flex; align-items: center; justify-content: space-between; gap: 18px; position: relative; z-index: 1; margin-top: 22px; }
+    .temperature { font: 500 clamp(64px, 9vw, 92px)/1 'Space Grotesk', sans-serif; letter-spacing: -7px; }
+    .condition { color: #d4e2f2; font-size: 17px; margin-top: 7px; }
+    .feels { color: var(--muted); font-size: 13px; margin-top: 8px; }
+    .weather-icon { font-size: clamp(76px, 10vw, 112px); filter: drop-shadow(0 10px 24px rgba(255, 205, 112, .15)); margin-right: 12px; }
+    .current-footer { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 27px; padding-top: 19px; border-top: 1px solid var(--border); }
+    .mini-stat { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    .mini-stat b { display: block; color: var(--text); font-size: 13px; font-weight: 600; margin-top: 3px; }
+
+    .side-panel { padding: 24px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    h2 { margin: 0; font: 600 16px 'Space Grotesk', sans-serif; letter-spacing: -.2px; }
+    .muted-label { color: var(--muted); font-size: 11px; }
+    .sun-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .sun-row:last-of-type { border-bottom: 0; }
+    .sun-info { display: flex; align-items: center; gap: 12px; }
+    .sun-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; background: rgba(120, 183, 255, .1); font-size: 17px; }
+    .sun-info small { display: block; color: var(--muted); font-size: 11px; }
+    .sun-info strong { display: block; margin-top: 3px; font-size: 14px; }
+    .sun-time { font: 600 15px 'Space Grotesk', sans-serif; }
+
+    .section { margin-top: 20px; padding: 24px; }
+    .hourly { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .hour { text-align: center; padding: 15px 7px; border-radius: 15px; background: rgba(119, 159, 203, .055); }
+    .hour.active { background: rgba(120, 183, 255, .13); outline: 1px solid rgba(120, 183, 255, .22); }
+    .hour time { display: block; color: var(--muted); font-size: 11px; }
+    .hour .icon { display: block; font-size: 22px; margin: 12px 0; }
+    .hour strong { font: 600 15px 'Space Grotesk', sans-serif; }
+
+    .bottom-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; margin-top: 16px; }
+    .forecast { padding: 24px; }
+    .forecast-row { display: grid; grid-template-columns: 1fr 50px 1fr 1fr; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .forecast-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .forecast-day { color: #dce7f4; font-weight: 600; }
+    .forecast-icon { font-size: 19px; }
+    .forecast-desc { color: var(--muted); font-size: 12px; }
+    .range { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+    .range b { color: var(--text); font-weight: 600; }
+    .range-line { height: 5px; flex: 1; min-width: 28px; border-radius: 10px; background: linear-gradient(90deg, #75b8ed, #f3c56e); opacity: .8; }
+
+    .details { padding: 24px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .detail { padding: 15px; border: 1px solid var(--border); border-radius: 15px; background: rgba(119, 159, 203, .045); }
+    .detail-label { color: var(--muted); font-size: 11px; }
+    .detail-value { font: 600 20px 'Space Grotesk', sans-serif; margin-top: 8px; }
+    .detail-note { color: #7f91a8; font-size: 10px; margin-top: 3px; }
+
+    footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 25px; color: #71839b; font-size: 11px; }
+    .api-hint { color: #8fa8c5; }
+
+    @media (max-width: 760px) {
+      .app { width: min(100% - 28px, 560px); padding-top: 22px; }
+      header { margin-bottom: 26px; }
+      .header-note { display: none; }
+      .topline { align-items: stretch; flex-direction: column; }
+      .search { width: 100%; }
+      .dashboard, .bottom-grid { grid-template-columns: 1fr; }
+      .current { min-height: 290px; padding: 23px; }
+      .current-footer { gap: 16px; }
+      .side-panel, .section, .forecast, .details { padding: 21px; }
+      .hourly { grid-template-columns: repeat(3, 1fr); }
+      .hour:nth-child(n+4) { display: none; }
+      footer { flex-direction: column; }
+    }
+    @media (max-width: 390px) {
+      .weather-icon { margin-right: 0; }
+      .forecast-row { grid-template-columns: 1fr 28px 1fr; }
+      .forecast-desc { display: none; }
+      .range { gap: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">☼</div>
+        <div>
+          <div class="brand-name">atmos</div>
+          <div class="brand-sub">weather dashboard</div>
+        </div>
+      </div>
+      <div class="header-note">A clearer view of your day.</div>
+    </header>
+
+    <div class="topline">
+      <div>
+        <div class="eyebrow">Weather overview</div>
+        <h1>Good afternoon.</h1>
+      </div>
+      <form class="search" id="searchForm">
+        <span>⌕</span>
+        <input id="cityInput" type="search" placeholder="Search for a city..." aria-label="City name" />
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+    <section class="dashboard">
+      <article class="panel current">
+        <div class="location">📍 <strong id="cityName">São Paulo, BR</strong> <span id="dateLabel">· Today</span></div>
+        <div class="current-main">
+          <div>
+            <div class="temperature"><span id="temperature">24</span><span>°</span></div>
+            <div class="condition" id="condition">Partly cloudy</div>
+            <div class="feels">Feels like <strong id="feelsLike">26°</strong></div>
+          </div>
+          <div class="weather-icon" id="weatherIcon">🌤️</div>
+        </div>
+        <div class="current-footer">
+          <div class="mini-stat"><span>💧</span><span>Humidity<b id="humidity">68%</b></span></div>
+          <div class="mini-stat"><span>💨</span><span>Wind<b id="wind">14 km/h</b></span></div>
+          <div class="mini-stat"><span>☔</span><span>Chance of rain<b id="rainChance">20%</b></span></div>
+        </div>
+      </article>
+
+      <aside class="panel side-panel">
+        <div class="section-heading">
+          <h2>Sunrise & sunset</h2>
+          <span class="muted-label">LOCAL TIME</span>
+        </div>
+        <div class="sun-row">
+          <div class="sun-info"><div class="sun-icon">🌅</div><div><small>Sunrise</small><strong>First light</strong></div></div>
+          <div class="sun-time" id="sunrise">06:12 AM</div>
+        </div>
+        <div class="sun-row">
+          <div class="sun-info"><div class="sun-icon">🌇</div><div><small>Sunset</small><strong>Golden hour</strong></div></div>
+          <div class="sun-time" id="sunset">06:04 PM</div>
+        </div>
+        <div class="sun-row">
+          <div class="sun-info"><div class="sun-icon">☀️</div><div><small>Daylight</small><strong>Total duration</strong></div></div>
+          <div class="sun-time" id="daylight">11h 52m</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel section">
+      <div class="section-heading">
+        <h2>Today's forecast</h2>
+        <span class="muted-label">NEXT HOURS</span>
+      </div>
+      <div class="hourly" id="hourlyForecast">
+        <div class="hour active"><time>Now</time><span class="icon">🌤️</span><strong>24°</strong></div>
+        <div class="hour"><time>04 PM</time><span class="icon">☀️</span><strong>25°</strong></div>
+        <div class="hour"><time>05 PM</time><span class="icon">🌤️</span><strong>23°</strong></div>
+        <div class="hour"><time>06 PM</time><span class="icon">☁️</span><strong>21°</strong></div>
+        <div class="hour"><time>07 PM</time><span class="icon">☁️</span><strong>20°</strong></div>
+        <div class="hour"><time>08 PM</time><span class="icon">🌙</span><strong>19°</strong></div>
+      </div>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="panel forecast">
+        <div class="section-heading">
+          <h2>5-day forecast</h2>
+          <span class="muted-label">UPCOMING</span>
+        </div>
+        <div id="dailyForecast">
+          <div class="forecast-row"><span class="forecast-day">Tomorrow</span><span class="forecast-icon">🌦️</span><span class="forecast-desc">Showers</span><span class="range"><b>26°</b><i class="range-line"></i>19°</span></div>
+          <div class="forecast-row"><span class="forecast-day">Wednesday</span><span class="forecast-icon">☀️</span><span class="forecast-desc">Sunny</span><span class="range"><b>28°</b><i class="range-line"></i>20°</span></div>
+          <div class="forecast-row"><span class="forecast-day">Thursday</span><span class="forecast-icon">⛅</span><span class="forecast-desc">Partly cloudy</span><span class="range"><b>25°</b><i class="range-line"></i>18°</span></div>
+          <div class="forecast-row"><span class="forecast-day">Friday</span><span class="forecast-icon">🌧️</span><span class="forecast-desc">Rain</span><span class="range"><b>22°</b><i class="range-line"></i>17°</span></div>
+          <div class="forecast-row"><span class="forecast-day">Saturday</span><span class="forecast-icon">🌤️</span><span class="forecast-desc">Partly cloudy</span><span class="range"><b>27°</b><i class="range-line"></i>19°</span></div>
+        </div>
+      </article>
+
+      <article class="panel details">
+        <div class="section-heading">
+          <h2>Weather details</h2>
+          <span class="muted-label">RIGHT NOW</span>
+        </div>
+        <div class="detail-grid">
+          <div class="detail"><div class="detail-label">UV INDEX</div><div class="detail-value" id="uvIndex">5 <span style="font-size:12px;color:#f0c477">Moderate</span></div><div class="detail-note">Wear sun protection</div></div>
+          <div class="detail"><div class="detail-label">PRESSURE</div><div class="detail-value" id="pressure">1014 <small style="font-size:11px">hPa</small></div><div class="detail-note">Sea-level pressure</div></div>
+          <div class="detail"><div class="detail-label">VISIBILITY</div><div class="detail-value" id="visibility">10 <small style="font-size:11px">km</small></div><div class="detail-note">Good visibility</div></div>
+          <div class="detail"><div class="detail-label">CLOUD COVER</div><div class="detail-value" id="cloudCover">42<span style="font-size:13px">%</span></div><div class="detail-note">Cloud coverage</div></div>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <span>ATMOS · A small window into the weather.</span>
+      <span class="api-hint">Demo values — connect your weather API to make this live.</span>
+    </footer>
+  </main>
+
+  <script>
+    // UI only: connect your API inside your own fetch function.
+    // The form currently prevents a page reload and exposes the searched city.
+    const searchForm = document.querySelector("#searchForm");
+    const cityInput = document.querySelector("#cityInput");
+
+    async function consumeWeather(latitude, longitude)
+    {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m&hourly=temperature_2m,precipitation_probability&timezone=auto`;
+      let response = await fetch(url);
+      let data = await response.json();
+
+      console.log(data);
+      return data;
+    }
+
+    async function consumeGeo(name)
+    {
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${name}`;
+      let response = await fetch(url);
+
+      if(!response.ok)
+      {
+        throw new Error("The city doesn't exist or something idk");
+      }
+
+      let data = await response.json();
+
+      return data;
+    }
+
+    searchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const city = cityInput.value.trim();
+      if (!city) return;
+
+      async function getCity(name)
+      {
+        let cityName = await consumeGeo(name);
+
+        return cityName.results[0];
+      }
+
+      async function updateDashboard()
+      {
+        let cityInfo = await getCity(city);
+
+        let cityLatitude = cityInfo.latitude;
+        let cityLongitude = cityInfo.longitude;
+
+        let weatherJson = await consumeWeather(cityLatitude, cityLongitude);
+
+        firstDashboard(weatherJson);
+      }
+
+      async function firstDashboard(weatherJson)
+      {
+        const tempHolder = document.querySelector("#temperature");
+        
+        tempHolder.textContent = weatherJson.current.temperature_2m;
+
+        const humHolder = document.querySelector("#humidity");
+
+        humHolder.textContent = weatherJson.current.relative_humidity_2m + "%";
+
+        const windHolder = document.querySelector("#wind");
+
+        windHolder.textContent = weatherJson.current.wind_speed_10m + "km/h";
+
+        const rainHolder = document.querySelector("#rain");
+
+        rainHolder.textContent = weatherJson.current
+      }
+
+      updateDashboard();
+
+      document.querySelector("#cityName").textContent = city;
+      cityInput.value = "";
+    });
+
+
+  </script>
+</body>
+</html>
